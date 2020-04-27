@@ -10,6 +10,6 @@
 # result : ![alt text](./img/3.png)
 
 # comand - node index.js --action="remove" --id=3
-# result : ![alt text](./img/4.png)
+# result : ![alt text](/img/4.png)
  
  
