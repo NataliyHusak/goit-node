@@ -44,9 +44,7 @@ app.post(
     });
     const result = Joi.validate(req.body, schema);
     if (result.error) {
-      res
-        .status(400)
-        .send({ message: "missing required name field" });
+      res.status(400).send({ message: "missing required name field" });
     } else {
       next();
     }
