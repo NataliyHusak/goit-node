@@ -39,11 +39,11 @@ function getContactById({ req, res, contactId }) {
 function removeContact({ res, contactId }) {
   getData()
     .then((data) => {
-      const contact = data.find((item) => item.id == contactId);
+      const contact = data.find((el) => el.id == contactId);
       if (!contact) {
         res.status(404).send({ message: "Not found" });
       }
-      const filteredContacts = data.filter((item) => item.id != contactId);
+      const filteredContacts = data.filter((el) => el.id != contactId);
       fsPromises
         .writeFile(contactsPath, JSON.stringify(filteredContacts, "", 2))
         .then(() => {
@@ -57,7 +57,7 @@ function removeContact({ res, contactId }) {
 
 //********* */
 
-function addContact({ name, email, phone, res }) {
+function addContact({ name, email, phone, req, res }) {
   getData().then((data) => {
     const contact = {
       id: Date.now,
@@ -65,7 +65,9 @@ function addContact({ name, email, phone, res }) {
       email,
       phone,
     };
+
     data.push(contact);
+
     fsPromises
       .writeFile(contactsPath, JSON.stringify(data, "", 2))
       .then(() => {
@@ -79,16 +81,14 @@ function addContact({ name, email, phone, res }) {
 
 function updateContact({ req, res, id }) {
   getData().then((data) => {
-    const contact = data.findIndex((item) => item.id == id);
+    const contact = data.findIndex((el) => el.id == id);
     if (contact == -1) {
       res.status(404).send({ message: "Not found" });
     } else {
       Object.assign(data[contact], { ...req.body });
-      fsPromises
-        .writeFile(contactsPath, JSON.stringify(data, null, 2))
-        .then(() => {
-          res.send(data[contact]);
-        });
+      fsPromises.writeFile(contactsPath, JSON.stringify(contact)).then(() => {
+        res.send(data[contact]);
+      });
     }
   });
 }
