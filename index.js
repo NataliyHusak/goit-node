@@ -64,7 +64,7 @@ app.patch(
     });
     const result = Joi.validate(req.body, schema);
     if (result.error) {
-      resp.status(400).send(result.error, message, "missing fields");
+      res.status(400).send(result.error, message, "missing fields");
     } else {
       next();
     }
