@@ -45,7 +45,7 @@ function removeContact({ res, contactId }) {
       }
       const filteredContacts = data.filter((el) => el.id != contactId);
       fsPromises
-        .writeFile(contactsPath, JSON.stringify(filteredContacts, "", 2))
+        .writeFile(contactsPath, JSON.stringify(filteredContacts, "utf-8", 2))
         .then(() => {
           res.status(200).send({ message: "contact deleted" });
         });
@@ -69,7 +69,7 @@ function addContact({ name, email, phone, req, res }) {
     data.push(contact);
 
     fsPromises
-      .writeFile(contactsPath, JSON.stringify(data, "", 2))
+      .writeFile(contactsPath, JSON.stringify(data, "utf-8", 2))
       .then(() => {
         res.status(201).send(contact);
       })
