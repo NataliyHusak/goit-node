@@ -1,7 +1,7 @@
 const express = require("express");
 const cors = require("cors");
 const Joi = require("joi");
-// const dotenv = require("dotenv");
+const dotenv = require("dotenv");
 const contacts = require("./contacts");
 
 const app = express();
@@ -9,12 +9,12 @@ const app = express();
 app.use(cors());
 app.use(express.json());
 app.use(express.static("public"));
-app.use(express.urlencoded());
+app.use(express.urlencoded({ extended: true }));
 
-// dotenv.config();
+dotenv.config();
 
-// const PORT = process.env.PORT;
-const PORT = 3002;
+const PORT = process.env.PORT;
+// const PORT = 3002;
 
 app.get("/", (req, res) => {
   res.send("Hello from api");
@@ -42,7 +42,7 @@ app.post(
       email: Joi.string().required(),
       phone: Joi.string().required(),
     });
-    const result = Joi.validate(req.body, schema);
+    const result = Joi.validate(res.body, schema);
     if (result.error) {
       res.status(400).send({ message: "missing required name field" });
     } else {
