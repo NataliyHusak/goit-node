@@ -1,81 +1,111 @@
 const express = require("express");
-const cors = require("cors");
+const { MongoClient, ObjectID } = require("mongodb");
 const Joi = require("joi");
-const dotenv = require("dotenv");
-const contacts = require("./contacts");
+require("dotenv").config();
 
 const app = express();
 
-app.use(cors());
 app.use(express.json());
-app.use(express.static("public"));
 app.use(express.urlencoded({ extended: true }));
 
-dotenv.config();
+const url = process.env.dbUrl;
 
-const PORT = process.env.PORT;
-// const PORT = 3002;
+const dbName = "db-contacts";
+
+let db;
+
+function validateContact(req, res, next) {
+  const schema = Joi.object().keys({
+    name: Joi.string().required(),
+    email: Joi.string().required(),
+    phone: Joi.string().required(),
+  });
+
+  const result = Joi.validate(req.body, schema);
+
+  if (result.error) return res.status(400).send(result.error);
+
+  next();
+}
 
 app.get("/", (req, res) => {
-  res.send("Hello from api");
+  res.send("hello from API");
 });
 
-app.get("/api/contacts", (req, res) => {
-  contacts.listContacts(req, res);
-});
+app.get("/contacts", (req, res) => {
+  db.collection("contacts")
+    .find()
+    .toArray((err, docs) => {
+      if (err) return res.sendStatus(500);
 
-app.get("/api/contacts/:contactId", (req, res) => {
-  contacts.getContactById({ req, res, contactId: req.params.contactId });
-});
-
-app.delete("/api/contacts/:contactId", (req, res) => {
-  const contactId = req.params.contactId;
-  contacts.removeContact({ req, res, contactId });
-});
-
-//********* */
-app.post(
-  "/api/contacts",
-  (req, res, next) => {
-    const schema = Joi.object({
-      name: Joi.string().required(),
-      email: Joi.string().required(),
-      phone: Joi.string().required(),
+      res.send(docs);
     });
-    const result = Joi.validate( req.body, schema);
-    if (result.error) {
-      res.status(400).send({ message: "missing required name field" });
-    } else {
-      next();
+});
+
+app.post("/contacts", validateContact, (req, res) => {
+  const contact = {
+    name: req.body.name,
+    email: req.body.email,
+    phone: req.body.phone,
+  };
+
+  db.collection("contacts").insertOne(contact, (err) => {
+    if (err) return res.sendStatus(500);
+
+    res.status(200).json(contact);
+  });
+});
+
+app.get("/articontactssts/:id", (req, res) => {
+  db.collection("contacts").findOne(
+    { _id: ObjectID(req.params.id) },
+    (err, docs) => {
+      if (err) return res.sendStatus(500);
+
+      res.status(200).json(docs);
     }
-  },
-  (req, res) => {
-    contacts.addContact({ ...req.body, res });
+  );
+});
+
+app.put("/contacts/:id", validateContact, (req, res) => {
+  db.collection("contacts").updateOne(
+    { _id: ObjectID(req.params.id) },
+    {
+      $set: {
+        name: req.body.name,
+        email: req.body.email,
+        phone: req.body.phone,
+      },
+    },
+    (err, docs) => {
+      if (err) return res.sendStatus(500);
+      res.status(200).send("was upd");
+    }
+  );
+});
+
+app.delete("/contacts/:id", (req, res) => {
+  db.collection("contacts").deleteOne(
+    { _id: ObjectID(req.params.id) },
+    (err, result) => {
+      if (err) return res.sendStatus(500);
+      res.status(200).send("was del");
+    }
+  );
+});
+
+MongoClient.connect(
+  url,
+  { useNewUrlParser: true, useUnifiedTopology: true },
+  (err, databaseConect) => {
+    if (err) return console.log(err);
+
+    console.log("Connected successfully to BD");
+
+    db = databaseConect.db(dbName);
+
+    app.listen(process.env.PORT, () => {
+      console.log("app is runnin on port " + process.env.PORT);
+    });
   }
 );
-
-app.patch(
-  "/api/contacts/:contactId",
-  (req, res, next) => {
-    const schema = Joi.object({
-      name: Joi.string(),
-      email: Joi.string(),
-      phone: Joi.string(),
-    });
-    const result = Joi.validate(req.body, schema, res);
-    if (result.error) {
-      res.status(400).send({ message: "missing fields" });
-    } else {
-      next();
-    }
-  },
-  (req, res) => {
-    const id = req.params.contactId;
-    contacts.updateContact({ req, res, id });
-  }
-);
-
-app.listen(PORT, () => {
-  console.log("App start on port:", PORT);
-
-});
