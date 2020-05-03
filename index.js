@@ -42,7 +42,7 @@ app.post(
       email: Joi.string().required(),
       phone: Joi.string().required(),
     });
-    const result = Joi.validate(res.body, schema);
+    const result = Joi.validate( res.body, schema);
     if (result.error) {
       res.status(400).send({ message: "missing required name field" });
     } else {
