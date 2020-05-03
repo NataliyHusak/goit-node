@@ -102,4 +102,6 @@ module.exports = {
   removeContact,
   addContact,
   updateContact,
+
 };
+
