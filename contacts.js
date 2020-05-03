@@ -1,20 +1,22 @@
 const fs = require("fs");
 const path = require("path");
 const { promises: fsPromises } = fs;
-
 const contactsPath = path.join(__dirname, "db", "contacts.json");
+
+const contacts = fs.readFileSync(contactsPath, "utf-8");
+const contactsArray = JSON.parse(contacts);
 
 function getData() {
   return fsPromises
     .readFile(contactsPath, "utf-8")
-    .then((data) => JSON.parse(data))
+    .then((contacts) => JSON.parse(contacts))
     .catch((err) => err);
 }
 
 function listContacts(req, res) {
   getData()
-    .then((data) => {
-      res.send(data);
+    .then((contacts) => {
+      res.send(contacts);
     })
     .catch((err) => {
       console.log(err);
@@ -23,8 +25,8 @@ function listContacts(req, res) {
 
 function getContactById({ req, res, contactId }) {
   getData()
-    .then((data) => {
-      const contact = data.find((el) => el.id == contactId);
+    .then((contacts) => {
+      const contact = contacts.find((el) => el.id == contactId);
       if (contact) {
         res.send(contact);
       } else {
@@ -38,12 +40,12 @@ function getContactById({ req, res, contactId }) {
 
 function removeContact({ res, contactId }) {
   getData()
-    .then((data) => {
-      const contact = data.find((el) => el.id == contactId);
+    .then((contacts) => {
+      const contact = contacts.find((el) => el.id == contactId);
       if (!contact) {
         res.status(404).send({ message: "Not found" });
       }
-      const filteredContacts = data.filter((el) => el.id != contactId);
+      const filteredContacts = contacts.filter((el) => el.id != contactId);
       fsPromises
         .writeFile(contactsPath, JSON.stringify(filteredContacts, "utf-8", 2))
         .then(() => {
@@ -55,42 +57,40 @@ function removeContact({ res, contactId }) {
     });
 }
 
-//********* */
+// ********* */
 
-function addContact({ name, email, phone,  req, res }) {
-  getData().then((data) => {
-    const contact = {
-      id: Date.now,
+function addContact({ res, name, email, phone }) {
+  getData().then((contacts) => {
+    lastId = contactsArray.length + 1;
+    let newContact = {
+      id: lastId,
       name,
       email,
       phone,
     };
 
-    console.log(contact)
-    
-    data.push(contact);
-    console.log(data)
+    contacts.push(newContact);
+    console.log(contacts);
     fsPromises
-      .writeFile(contactsPath, JSON.stringify(data, "utf-8", 2))
+      .writeFile(contactsPath, JSON.stringify(contacts, "utf-8", 2))
       .then(() => {
-        res.status(201).send(contact);
-              })
+        res.status(201).send(newContact);
+      })
       .catch((err) => {
         console.log(err);
       });
-      
   });
 }
 
 function updateContact({ req, res, id }) {
-  getData().then((data) => {
-    const contact = data.findIndex((el) => el.id == id);
+  getData().then((contacts) => {
+    const contact = contacts.findIndex((el) => el.id == id);
     if (contact == -1) {
       res.status(404).send({ message: "Not found" });
     } else {
-      Object.assign(data[contact], { ...req.body });
+      Object.assign(contacts[contact], { ...req.body });
       fsPromises.writeFile(contactsPath, JSON.stringify(contact)).then(() => {
-        res.send(data[contact]);
+        res.send(contacts[contact]);
       });
     }
   });

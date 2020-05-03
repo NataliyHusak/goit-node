@@ -14,7 +14,7 @@ app.use(express.urlencoded({ extended: true }));
 dotenv.config();
 
 const PORT = process.env.PORT;
-
+// const PORT = 3002;
 
 app.get("/", (req, res) => {
   res.send("Hello from api");
@@ -33,6 +33,7 @@ app.delete("/api/contacts/:contactId", (req, res) => {
   contacts.removeContact({ req, res, contactId });
 });
 
+//********* */
 app.post(
   "/api/contacts",
   (req, res, next) => {
@@ -41,7 +42,7 @@ app.post(
       email: Joi.string().required(),
       phone: Joi.string().required(),
     });
-    const result = Joi.validate(res.body, schema);
+    const result = Joi.validate( req.body, schema);
     if (result.error) {
       res.status(400).send({ message: "missing required name field" });
     } else {
@@ -61,7 +62,7 @@ app.patch(
       email: Joi.string(),
       phone: Joi.string(),
     });
-    const result = Joi.validate(req.body, schema);
+    const result = Joi.validate(req.body, schema, res);
     if (result.error) {
       res.status(400).send({ message: "missing fields" });
     } else {
