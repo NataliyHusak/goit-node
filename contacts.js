@@ -59,7 +59,7 @@ function removeContact({ res, contactId }) {
 
 // ********* */
 
-function addContact({ req, res, name, email, phone }) {
+function addContact({ res, name, email, phone }) {
   getData().then((contacts) => {
     lastId = contactsArray.length + 1;
     let newContact = {
