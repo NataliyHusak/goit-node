@@ -56,7 +56,7 @@ app.post("/contacts", validateContact, (req, res) => {
   });
 });
 
-app.get("/articontactssts/:id", (req, res) => {
+app.get("/contacts/:id", (req, res) => {
   db.collection("contacts").findOne(
     { _id: ObjectID(req.params.id) },
     (err, docs) => {
