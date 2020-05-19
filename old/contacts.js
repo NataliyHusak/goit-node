@@ -57,8 +57,6 @@ function removeContact({ res, contactId }) {
     });
 }
 
-// ********* */
-
 function addContact({ res, name, email, phone }) {
   getData().then((contacts) => {
     lastId = contactsArray.length + 1;
