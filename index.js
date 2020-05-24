@@ -1,111 +1,67 @@
 const express = require("express");
-const { MongoClient, ObjectID } = require("mongodb");
-const Joi = require("joi");
+const cors = require("cors");
+const morgan = require("morgan");
+const mongoose = require("mongoose");
+const getContacts = require("./routing/getContacts");
+const editContacts = require("./routing/editContacts");
 require("dotenv").config();
 
-const app = express();
+const URLdb = process.env.URLdb;
+const PORT = process.env.PORT;
 
-app.use(express.json());
-app.use(express.urlencoded({ extended: true }));
-
-const url = process.env.dbUrl;
-
-const dbName = "db-contacts";
-
-let db;
-
-function validateContact(req, res, next) {
-  const schema = Joi.object().keys({
-    name: Joi.string().required(),
-    email: Joi.string().required(),
-    phone: Joi.string().required(),
-  });
-
-  const result = Joi.validate(req.body, schema);
-
-  if (result.error) return res.status(400).send(result.error);
-
-  next();
-}
-
-app.get("/", (req, res) => {
-  res.send("hello from API");
-});
-
-app.get("/contacts", (req, res) => {
-  db.collection("contacts")
-    .find()
-    .toArray((err, docs) => {
-      if (err) return res.sendStatus(500);
-
-      res.send(docs);
-    });
-});
-
-app.post("/contacts", validateContact, (req, res) => {
-  const contact = {
-    name: req.body.name,
-    email: req.body.email,
-    phone: req.body.phone,
-  };
-
-  db.collection("contacts").insertOne(contact, (err) => {
-    if (err) return res.sendStatus(500);
-
-    res.status(200).json(contact);
-  });
-});
-
-app.get("/contacts/:id", (req, res) => {
-  db.collection("contacts").findOne(
-    { _id: ObjectID(req.params.id) },
-    (err, docs) => {
-      if (err) return res.sendStatus(500);
-
-      res.status(200).json(docs);
-    }
-  );
-});
-
-app.put("/contacts/:id", validateContact, (req, res) => {
-  db.collection("contacts").updateOne(
-    { _id: ObjectID(req.params.id) },
-    {
-      $set: {
-        name: req.body.name,
-        email: req.body.email,
-        phone: req.body.phone,
-      },
-    },
-    (err, docs) => {
-      if (err) return res.sendStatus(500);
-      res.status(200).send("was upd");
-    }
-  );
-});
-
-app.delete("/contacts/:id", (req, res) => {
-  db.collection("contacts").deleteOne(
-    { _id: ObjectID(req.params.id) },
-    (err, result) => {
-      if (err) return res.sendStatus(500);
-      res.status(200).send("was del");
-    }
-  );
-});
-
-MongoClient.connect(
-  url,
-  { useNewUrlParser: true, useUnifiedTopology: true },
-  (err, databaseConect) => {
-    if (err) return console.log(err);
-
-    console.log("Connected successfully to BD");
-
-    db = databaseConect.db(dbName);
-
-    app.listen(process.env.PORT, () => {
-      console.log("app is runnin on port " + process.env.PORT);
-    });
+const myServer = class myMongoDBServer {
+  constructor() {
+    this.server = null;
   }
-);
+  async start() {
+    this.initServer();
+    this.initMiddlewares();
+    this.initRoutes();
+    this.initErrorHandler();
+    await this.initDataBase();
+    this.startListening();
+  }
+  initServer = () => {
+    this.server = express();
+  };
+  initMiddlewares = () => {
+    this.server.use(express.json());
+    this.server.use(express.urlencoded({ extended: true }));
+    this.server.use(cors());
+    this.server.use(morgan("combined"));
+  };
+  initRoutes = () => {
+    this.server.use(express.static("public"));
+    this.server.use("/contacts", getContacts);
+    this.server.use("/contacts", editContacts);
+    this.server.use("/auth", editContacts);
+    this.server.use("/users", getContacts);
+    this.server.use("/users", editContacts);
+  };
+  initErrorHandler = () => {
+    this.server.use((err, req, res, next) => {
+      console.error("Error:", err.message);
+      res.status(500).send("Something broke!");
+    });
+  };
+  initDataBase = async () => {
+    try {
+      await mongoose.connect(URLdb, {
+        useNewUrlParser: true,
+        useUnifiedTopology: true,
+      });
+      console.log("Database connection successful");
+    } catch (error) {
+      console.log("Connecting error:", error.message);
+      process.exit(1);
+    }
+  };
+  startListening = () => {
+    this.server.listen(3001, () => {
+      console.log("myMongoDBServer listening on port:", PORT);
+    });
+  };
+};
+
+
+new myServer().start();
